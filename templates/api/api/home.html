@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Welcome to {{ user_university.name }}!</h2>
+    <h3>Available Vendors:</h3>
+    
+    {% if vendors %}
+        <ul>
+        {% for vendor in vendors %}
+            <li>
+                <strong>{{ vendor.name }}</strong> ({{ vendor.location }})
+                <p>Status: {{ vendor.crowd_status }}</p>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No vendors are listed for your university yet.</p>
+    {% endif %}
+
+{% endblock %}

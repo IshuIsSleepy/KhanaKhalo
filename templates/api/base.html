@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KhanaKhalo - Campus Food Ordering</title>
+    <style>
+        .messages { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <nav>
+        {% if user.is_authenticated %}
+            Welcome, {{ user.username }} | 
+            <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a> | 
+            <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="messages">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</body>
+</html>
