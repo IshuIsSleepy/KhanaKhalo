@@ -1,0 +1,286 @@
+{% extends 'api/base.html' %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+    :root {
+        --primary: #e67e22;
+        --bg-light: #f8f9fa;
+        --success: #27ae60;
+        --danger: #c0392b;
+        --warning: #f39c12;
+        --info: #3498db;
+        --dark: #2c3e50;
+    }
+
+    .dashboard-container {
+        max-width: 1000px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+    }
+    .live-badge {
+        background: #e74c3c;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        animation: blink 2s infinite;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .live-badge::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+    /* Kanban-style Grid */
+    .orders-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .order-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        padding: 20px;
+        border: 1px solid #eee;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .order-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+
+    /* Card Header */
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #eee;
+    }
+    .order-id { font-weight: 700; color: var(--dark); font-size: 1.1rem; }
+    .order-method { 
+        font-size: 0.75rem; font-weight: 600; text-transform: uppercase; 
+        padding: 4px 8px; border-radius: 6px; background: #eee; color: #666;
+    }
+    
+    /* Customer Info */
+    .customer-info {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
+        font-size: 0.9rem; color: #555;
+    }
+    .user-avatar {
+        width: 30px; height: 30px; background: var(--primary); color: white;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.8rem;
+    }
+
+    /* Items List */
+    .items-list { list-style: none; margin-bottom: 20px; }
+    .order-item { 
+        display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; 
+    }
+    .qty-badge { 
+        background: var(--dark); color: white; padding: 2px 6px; border-radius: 4px; 
+        font-size: 0.8rem; font-weight: 600; margin-right: 8px; 
+    }
+
+    /* Action Buttons Area */
+    .action-area { display: grid; gap: 10px; margin-top: auto; }
+    
+    .btn {
+        border: none; padding: 12px; border-radius: 8px; 
+        font-weight: 600; cursor: pointer; font-size: 0.95rem;
+        transition: all 0.2s; width: 100%;
+    }
+    .btn:hover { filter: brightness(90%); }
+
+    .btn-accept { background: var(--success); color: white; }
+    .btn-reject { background: var(--bg-light); color: var(--danger); border: 1px solid #e0e0e0; }
+    .btn-ready { background: var(--warning); color: white; }
+    .btn-complete { background: var(--dark); color: white; }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1; text-align: center; padding: 60px;
+        color: #95a5a6;
+    }
+
+    /* Toast Styles (Copying from menu.html) */
+    .toast-container {
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        z-index: 2000; display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+        background: rgba(40, 40, 40, 0.95); color: white;
+        padding: 12px 24px; border-radius: 50px;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        animation: slideDownFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-size: 0.9rem; font-weight: 500;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    @keyframes slideDownFade {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div>
+            <h2 class="dashboard-title">Incoming Orders</h2>
+            <p style="color: #7f8c8d;">Manage your queue effectively.</p>
+        </div>
+        <div class="live-badge">LIVE DASHBOARD</div>
+    </div>
+
+    <div class="orders-grid">
+        {% for order in orders %}
+        
+        {% if order.status != 'COMPLETED' and order.status != 'REJECTED' %}
+        
+        <div class="order-card" id="card-{{ order.id }}">
+            <div class="card-top">
+                <span class="order-id">#{{ order.id }}</span>
+                <span class="order-method">{{ order.get_order_method_display }}</span>
+            </div>
+
+            <div class="customer-info">
+                <div class="user-avatar">{{ order.user.username|slice:":1"|upper }}</div>
+                <div>
+                    <div style="font-weight: 600; color: var(--dark);">{{ order.user.username }}</div>
+                    <div style="font-size: 0.8rem; color: #999;">Roll No: {{ order.user.profile.roll_no }}</div>
+                </div>
+            </div>
+
+            <ul class="items-list">
+                {% for item in order.items.all %}
+                <li class="order-item">
+                    <div><span class="qty-badge">{{ item.quantity }}x</span> {{ item.menu_item.name }}</div>
+                    <div style="font-weight: 600;">₹{{ item.price }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 700; color: var(--dark); border-top: 1px solid #eee; padding-top: 10px;">
+                <span>Total Bill</span>
+                <span>₹{{ order.total_amount }}</span>
+            </div>
+
+            <div class="action-area">
+                {% if order.status == 'PENDING' %}
+                    <button class="btn btn-accept" onclick="updateStatus({{ order.id }}, 'ACCEPTED')">
+                        <i class="fa-solid fa-check"></i> Accept Order
+                    </button>
+                    <button class="btn btn-reject" onclick="updateStatus({{ order.id }}, 'REJECTED')">
+                        <i class="fa-solid fa-xmark"></i> Reject
+                    </button>
+                
+                {% elif order.status == 'ACCEPTED' %}
+                    <button class="btn btn-ready" onclick="updateStatus({{ order.id }}, 'READY')">
+                        <i class="fa-solid fa-bell"></i> Mark as Ready
+                    </button>
+                
+                {% elif order.status == 'READY' %}
+                    <button class="btn btn-complete" onclick="completeOrder({{ order.id }})">
+                        <i class="fa-solid fa-check-double"></i> Complete Order
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% endif %}
+        
+        {% empty %}
+        <div class="empty-state">
+            <i class="fa-solid fa-mug-hot" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+            <h3>No Active Orders</h3>
+            <p>Relax! New orders will pop up here.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+    // --- Toast Notification Function ---
+    function showToast(message, type = 'neutral') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        let icon = type === 'success' ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-info-circle"></i>';
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- Status Update Logic ---
+    function updateStatus(orderId, newStatus) {
+        fetch(`/api/update-order/${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                showToast(`Order #${orderId} updated to ${newStatus}`, 'success');
+                // Slight delay to allow toast to be seen before reload
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Error updating order', 'error');
+            }
+        });
+    }
+
+    // --- Complete Order (With Confetti!) ---
+    function completeOrder(orderId) {
+        // 1. Trigger Confetti
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#27ae60', '#2ecc71', '#f1c40f']
+        });
+
+        // 2. Call API
+        updateStatus(orderId, 'COMPLETED');
+    }
+
+    // --- Auto Refresh (Every 30s) ---
+    setTimeout(() => location.reload(), 30000);
+</script>
+{% endblock %}

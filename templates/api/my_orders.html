@@ -1,0 +1,173 @@
+{% extends 'api/base.html' %}
+
+{% block content %}
+<style>
+    .orders-container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* Order Card Styles */
+    .order-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+        transition: transform 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+    .order-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Header of the card */
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #eee;
+    }
+    .vendor-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    .order-time {
+        font-size: 0.85rem;
+        color: #95a5a6;
+        margin-top: 4px;
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-PENDING { background: #f1c40f; color: #fff; } /* Yellow */
+    .status-ACCEPTED { background: #3498db; color: #fff; } /* Blue */
+    .status-READY { background: #e67e22; color: #fff; animation: pulse 2s infinite; } /* Orange */
+    .status-COMPLETED { background: #27ae60; color: #fff; } /* Green */
+    .status-REJECTED { background: #e74c3c; color: #fff; } /* Red */
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(230, 126, 34, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0); }
+    }
+
+    /* List of items */
+    .order-items {
+        list-style: none;
+        margin-bottom: 15px;
+    }
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        color: #555;
+    }
+    .item-qty {
+        font-weight: 600;
+        margin-right: 8px;
+        color: #2c3e50;
+    }
+
+    /* Footer */
+    .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    .total-price {
+        font-size: 1.1rem;
+    }
+    
+    .refresh-note {
+        text-align: center;
+        color: #95a5a6;
+        font-size: 0.9rem;
+        margin-top: 30px;
+        padding-bottom: 50px;
+    }
+</style>
+
+<div class="orders-container">
+    <h2 class="page-title"><i class="fa-solid fa-receipt"></i> My Orders</h2>
+
+    {% for order in orders %}
+    <div class="order-card">
+        <div class="order-header">
+            <div>
+                <div class="vendor-name">{{ order.vendor.name }}</div>
+                <div class="order-time">{{ order.created_at|date:"M d, h:i A" }}</div>
+            </div>
+            <span class="status-badge status-{{ order.status }}">
+                {{ order.get_status_display }}
+            </span>
+        </div>
+
+        <ul class="order-items">
+            {% for item in order.items.all %}
+            <li class="order-item">
+                <span><span class="item-qty">{{ item.quantity }}x</span> {{ item.menu_item.name }}</span>
+                <span>₹{{ item.price }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="order-footer">
+            <span>Total Paid</span>
+            <span class="total-price">₹{{ order.total_amount }}</span>
+        </div>
+        
+        {% if order.status == 'READY' %}
+        <div style="margin-top: 15px; background: #fff3cd; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #856404;">
+            <i class="fa-solid fa-bell"></i> Your food is ready! Please pick it up from the counter.
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 50px;">
+        <i class="fa-solid fa-utensils" style="font-size: 3rem; color: #ddd; margin-bottom: 20px;"></i>
+        <p style="color: #7f8c8d;">You haven't placed any orders yet.</p>
+        <a href="{% url 'home' %}" style="color: #e67e22; font-weight: 600; text-decoration: none; margin-top: 10px; display: inline-block;">Browse Vendors</a>
+    </div>
+    {% endfor %}
+
+    {% if orders %}
+    <div class="refresh-note">
+        <i class="fa-solid fa-rotate"></i> Pull down or refresh to check for status updates.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Auto-refresh the page every 15 seconds so the user sees status changes (Pending -> Accepted -> Ready)
+    setTimeout(function(){
+       window.location.reload(1);
+    }, 15000);
+</script>
+{% endblock %}
