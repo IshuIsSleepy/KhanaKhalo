@@ -1,4 +1,4 @@
-# api/forms.py
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -9,7 +9,6 @@ class UserRegisterForm(UserCreationForm):
     roll_no = forms.CharField(max_length=50, required=True, label="Roll Number")
     university = forms.ModelChoiceField(
         queryset=University.objects.all(),
-        # Make the university field not required initially
         required=False,
         empty_label="Select your university"
     )
@@ -25,18 +24,17 @@ class UserRegisterForm(UserCreationForm):
         university = cleaned_data.get('university')
 
         if email:
-            # Check for existing email first
             if User.objects.filter(email=email).exists():
                 raise forms.ValidationError("This email address is already registered.")
 
-            # --- New Logic for Auto-detection ---
+
             email_domain = email.split('@')[-1]
             try:
                 matched_university = University.objects.get(domain=email_domain)
-                # If a university is found, set it automatically
+
                 cleaned_data['university'] = matched_university
             except University.DoesNotExist:
-                # If no university matches the domain, then the field becomes required
+
                 if not university:
                     self.add_error('university', 'Your email domain does not match a registered university. Please select one manually.')
         

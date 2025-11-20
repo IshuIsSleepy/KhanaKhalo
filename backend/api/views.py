@@ -7,7 +7,6 @@ from django.http import JsonResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 
-# Import your forms and models
 from .forms import UserRegisterForm
 from .models import Vendor, Profile, MenuItem, Order, OrderItem
 
@@ -33,7 +32,7 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 
-                # Check if this user is a Vendor Owner
+
                 if hasattr(user, 'managed_vendor'):
                     return redirect('vendor_dashboard')
                     
@@ -48,12 +47,12 @@ def login_view(request):
 
 @login_required
 def home(request):
-    # Only students with profiles should see this view normally
+
     try:
         user_university = request.user.profile.university
         vendors = Vendor.objects.filter(university=user_university)
     except Profile.DoesNotExist:
-        # If a Vendor Owner tries to visit Home, just show them their dashboard or empty list
+
         if hasattr(request.user, 'managed_vendor'):
             return redirect('vendor_dashboard')
         messages.warning(request, 'Your profile is incomplete.')
@@ -76,7 +75,6 @@ def vendor_menu(request, vendor_id):
     }
     return render(request, 'api/menu.html', context)
 
-# --- NEW ORDERING VIEWS ---
 
 @login_required
 def create_order(request):
@@ -89,7 +87,7 @@ def create_order(request):
             
             vendor = get_object_or_404(Vendor, id=vendor_id)
             
-            # Create the Order
+
             order = Order.objects.create(
                 user=request.user,
                 vendor=vendor,
@@ -100,12 +98,8 @@ def create_order(request):
             total = 0
             for item in cart_items:
                 menu_item = MenuItem.objects.get(id=item['id'])
-                # Calculate price including options (simplified for now)
-                # In a real app, validate option prices from DB
                 item_price = menu_item.price 
                 
-                # Add to total logic here if you want precise option pricing validation
-                # For the hackathon, we trust the base calculation or simplify:
                 item_total = float(item_price) * item['quantity']
                 total += item_total
                 
@@ -120,7 +114,6 @@ def create_order(request):
             order.total_amount = total
             order.save()
             
-            # Update Vendor Crowd Status
             vendor.current_orders += 1
             vendor.save()
 
@@ -136,12 +129,12 @@ def my_orders(request):
 
 @login_required
 def vendor_dashboard(request):
-    # THE FIX: Look for the vendor linked to this user, don't use request.user.profile
+
     try:
         vendor = request.user.managed_vendor
         orders = Order.objects.filter(vendor=vendor).order_by('-created_at')
     except (Vendor.DoesNotExist, AttributeError):
-        # If user is not a vendor owner
+
         messages.error(request, "You do not have a vendor account assigned.")
         return redirect('home')
     
@@ -156,15 +149,14 @@ def update_order_status(request, order_id):
             new_status = data.get('status')
             order = get_object_or_404(Order, id=order_id)
             
-            # Security: Ensure only the owning vendor can update
+
             if request.user != order.vendor.vendor_owner:
                  return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
 
             previous_status = order.status
             order.status = new_status
             order.save()
-            
-            # Decrease active order count if completed/rejected
+
             if new_status in ['COMPLETED', 'REJECTED'] and previous_status not in ['COMPLETED', 'REJECTED']:
                 order.vendor.current_orders = max(0, order.vendor.current_orders - 1)
                 order.vendor.save()

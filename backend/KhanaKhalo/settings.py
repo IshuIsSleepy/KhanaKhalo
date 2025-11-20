@@ -1,21 +1,14 @@
-"""
-Django settings for KhanaKhalo project.
-"""
-
+##Used AI for fixing some bugs
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-# This now correctly points to your 'backend' folder as the project root.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-c=$#u03dqs*jm9(i&3^tuwdf_fd4)oa&%6di3er&fg%x*$7$d2'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -43,12 +36,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'KhanaKhalo.urls'
+ROOT_URLCONF = 'KhanaKhalo.urls' 
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # This now correctly looks for a 'templates' folder in your project root.
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -83,7 +75,6 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-# ... (rest of the file)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -103,7 +94,6 @@ AUTH_PASSWORD_VALIDATORS = [
     # },
 ]
 
-# ... (rest of the file)
 
 
 # Internationalization

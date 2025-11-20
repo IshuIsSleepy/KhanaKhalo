@@ -27,8 +27,6 @@ class Profile(models.Model):
         return self.user.username
 
 class Vendor(models.Model):
-    # --- NEW: Link a Vendor to a User (The Shop Owner) ---
-    # This allows a user to login and see the "Vendor Dashboard"
     vendor_owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='managed_vendor', null=True, blank=True)
 
     class ServiceType(models.TextChoices):
@@ -96,7 +94,6 @@ class MenuItem(models.Model):
     def __str__(self):
         return f"{self.name} - {self.vendor.name}"
 
-# --- NEW MODELS FOR ORDERING SYSTEM ---
 
 class Order(models.Model):
     class OrderStatus(models.TextChoices):
@@ -127,9 +124,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=6, decimal_places=2) # Price at time of order
-    # We store options as a simple text string for now (e.g., "Extra Cheese, No Mayo")
-    # You could use JSONField if you wanted to be fancy, but TextField is safer for quick dev.
+    price = models.DecimalField(max_digits=6, decimal_places=2) 
     customization = models.TextField(blank=True, null=True) 
 
     def __str__(self):

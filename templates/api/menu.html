@@ -306,7 +306,6 @@
             }
         });
     });
-        // --- STATE ---
         let cart = [];
         let currentItem = {
             id: null,
@@ -314,12 +313,11 @@
             basePrice: 0,
             finalPrice: 0,
             qty: 1,
-            selectedOptions: [] // Array of {name, price}
+            selectedOptions: [] 
         };
 
-        // --- MODAL FUNCTIONS ---
         function openItemModal(id, name, price, isVeg) {
-            // 1. Reset State
+
             currentItem = {
                 id: id,
                 name: name,
@@ -329,18 +327,18 @@
                 selectedOptions: []
             };
 
-            // 2. Update UI Text
+
             document.getElementById('modal-item-name').innerText = name;
             document.getElementById('modal-qty').innerText = '1';
             
-            // 3. Render Options
-            const optionsScript = document.getElementById(id); // Get the script tag with JSON
+
+            const optionsScript = document.getElementById(id); 
             let optionsHtml = '';
             
             if (optionsScript && optionsScript.textContent) {
                 try {
                     const options = JSON.parse(optionsScript.textContent);
-                    // Group by some category if you had one, otherwise just list them
+
                     if (options.length > 0) {
                         optionsHtml += `<div class="option-group"><div class="option-title">Add-ons</div>`;
                         options.forEach((opt, index) => {
@@ -365,7 +363,6 @@
             document.getElementById('modal-options-container').innerHTML = optionsHtml;
             updateModalPrice();
 
-            // 4. Show Modal
             document.getElementById('item-modal').classList.add('active');
         }
 
@@ -385,6 +382,7 @@
                 document.getElementById('modal-qty').innerText = currentItem.qty;
             }
         }
+        //Fancy animations to mimic swiggy (taken help from Gemini)
         function showToast(message, type = 'neutral') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -398,7 +396,7 @@
             
             container.appendChild(toast);
             
-            // Remove after 3 seconds
+            //3 seconds
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(-20px)';
@@ -419,12 +417,11 @@
             document.getElementById(modalId).classList.remove('active');
         }
 
-        // --- CART LOGIC ---
+        //cart
         function confirmAddToCart() {
-            // Create a unique key for cart items (so same item with diff options splits)
             const cartItem = {
                 ...currentItem,
-                key: Date.now() // simple unique ID
+                key: Date.now() //unique ID
             };
             cart.push(cartItem);
             
@@ -435,7 +432,6 @@
         function removeFromCart(key) {
             cart = cart.filter(item => item.key !== key);
             updateCartUI();
-            // If cart empty, close cart modal
             if(cart.length === 0) closeModal('cart-modal');
         }
 
@@ -449,7 +445,6 @@
                 return;
             }
 
-            // Calculate Totals
             const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
             const grandTotal = cart.reduce((sum, item) => sum + item.finalPrice, 0);
 
@@ -457,7 +452,7 @@
             totalSpan.innerText = `₹${grandTotal.toFixed(2)}`;
             bar.classList.add('visible');
 
-            // Update Cart Modal HTML
+    
             const list = document.getElementById('cart-items-list');
             list.innerHTML = cart.map(item => `
                 <div class="cart-item-row">
@@ -481,7 +476,7 @@
             if(cart.length > 0) document.getElementById('cart-modal').classList.add('active');
         }
 
-        // --- CHECKOUT (Connecting to Backend) ---
+        
         function checkout() {
             if (cart.length === 0) {
                 showToast('Your cart is empty!', 'error');
@@ -491,7 +486,7 @@
             const vendorId = "{{ vendor.id }}";
             const payload = {
                 vendor_id: vendorId,
-                method: 'PICKUP', // Default
+                method: 'PICKUP', 
                 items: cart.map(item => ({
                     id: item.id,
                     quantity: item.qty,
@@ -499,7 +494,7 @@
                 }))
             };
 
-            // Assumes you have the create_order URL setup from the previous advice
+            
             fetch("{% url 'create_order' %}", {
                 method: 'POST',
                 headers: {
@@ -511,27 +506,26 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // 1. Close the cart modal immediately
+                    
                     closeModal('cart-modal');
 
-                    // 2. Fire Confetti!
+                    //Fire Confetti using ai
                     confetti({
                         particleCount: 150,
                         spread: 70,
                         origin: { y: 0.6 },
-                        colors: ['#e67e22', '#27ae60', '#ffffff'] // Your theme colors
+                        colors: ['#e67e22', '#27ae60', '#ffffff'] 
                     });
 
-                    // 3. Show Success Message
+    
                     showToast('Order placed! Waiting for approval...', 'success');
 
-                    // 4. Redirect after a 2-second delay so they see the confetti
+                    // 2-second delay so they see the confetti after which re dirct
                     setTimeout(() => {
                         window.location.href = "{% url 'my_orders' %}"; 
                     }, 2000);
 
                 } else {
-                    // Replace the error alert too!
                     showToast(data.message || "Order Failed", 'error');
                 }
             })
