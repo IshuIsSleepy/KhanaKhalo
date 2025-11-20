@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - {{ vendor.name }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* BASE STYLES & VARIABLES */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        :root {
+            --primary-color: #4a9185; 
+            --secondary-color: #2c3e50; 
+            --background-light: #f5f5f5;
+            --card-bg-white: #ffffff;
+            --text-dark: #333;
+            --veg-color: #27ae60; 
+            --nonveg-color: #c0392b; 
+        }
+        body {
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+        body.modal-open { overflow: hidden; }
+        a { text-decoration: none; color: var(--primary-color); }
+        h2 { 
+            font-size: 1.6rem; 
+            font-weight: 700; 
+            color: var(--secondary-color); 
+            margin-bottom: 20px;
+        }
+        .background-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://www.shutterstock.com/image-vector/orange-gradient-pattern-background-nice-260nw-1934307431.jpg');
+            background-size: cover; background-position: center; 
+            filter: brightness(0.9) blur(1px); 
+            z-index: -1;
+            transition: filter 0.3s ease;
+        }
+        body.modal-open .background-container {
+             filter: brightness(0.7) blur(3px);
+        }
+        .menu-header {
+            position: sticky; 
+            top: 0;
+            background-color: var(--card-bg-white);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            z-index: 500;
+            padding: 15px 20px;
+            transition: all 0.3s ease;
+        }
+        .header-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .header-info h1 { font-size: 1.8rem; font-weight: 600; color: var(--secondary-color); }
+        .header-info p { color: #7f8c8d; font-size: 0.9rem; }
+        .back-link { 
+            font-size: 0.9rem; color: #555 !important; margin-bottom: 5px; 
+            display: block; font-weight: 500; cursor: pointer;
+        }
+        .header-actions .item-review {
+            color: #fff; background-color: var(--veg-color); padding: 5px 10px;
+            border-radius: 6px; font-weight: 600; font-size: 1rem;
+        }
+        .sorting-container {
+            display: flex; flex-wrap: wrap; gap: 15px; padding-bottom: 10px;
+        }
+        .sorting-bar-group { display: flex; gap: 10px; align-items: center; }
+        .sort-select, .veg-toggle-btn {
+            padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px;
+            background-color: #fff; font-size: 0.9rem; cursor: pointer;
+        }
+        .menu-content {
+            max-width: 1200px; margin: 0 auto; padding: 20px;
+            padding-bottom: 100px; 
+            transition: filter 0.3s ease;
+        }
+         body.modal-open .menu-content {
+             filter: brightness(0.7) blur(3px);
+         }
+        .menu-section h3 {
+            font-size: 1.4rem; color: var(--secondary-color); margin-top: 30px;
+            margin-bottom: 15px; border-left: 4px solid var(--primary-color);
+            padding-left: 10px; font-weight: 600;
+        }
+        .item-card {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: var(--card-bg-white); border-radius: 10px;
+            margin-bottom: 15px; padding: 15px; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eee;
+            transition: all 0.3s ease-in-out;
+        }
+        .item-card.hidden {
+            opacity: 0; height: 0; padding: 0; margin: 0;
+            overflow: hidden; border: none;
+        }
+        .item-type-icon {
+            width: 12px; height: 12px; border: 1px solid; border-radius: 2px;
+            margin-right: 5px; display: inline-block;
+        }
+        .veg { border-color: var(--veg-color); }
+        .non-veg { border-color: var(--nonveg-color); }
+        .veg::before { content: ''; background-color: var(--veg-color); display: block; width: 6px; height: 6px; border-radius: 50%; margin: 2px auto; }
+        .non-veg::before { content: ''; background-color: var(--nonveg-color); display: block; width: 6px; height: 6px; border-radius: 50%; margin: 2px auto; }
+        
+        .item-details { flex-grow: 1; padding-right: 15px; }
+        .item-description { font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px; }
+        .item-meta { display: flex; align-items: center; gap: 15px; font-size: 0.9rem; flex-wrap: wrap; }
+        .item-review { color: var(--veg-color); font-weight: 600; }
+        .delivery-time { color: var(--primary-color); font-weight: 600; } 
+        .item-price { font-weight: 700; color: var(--secondary-color); }
+        
+        .item-image-box {
+            position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden;
+            flex-shrink: 0; background-color: #eee;
+            background-size: cover; background-position: center;
+        }
+        .add-to-cart-btn {
+            position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+            background-color: var(--primary-color); color: white; border: 1px solid #fff;
+            padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        }
+        /* ... (all the other styles from your menu.html file) ... */
+        .cart-summary-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background-color: var(--secondary-color); color: white;
+            padding: 15px 20px; justify-content: space-between;
+            align-items: center; z-index: 999; display: none;
+            transform: translateY(100%); transition: transform 0.3s ease-out;
+        }
+        .cart-summary-bar.visible { display: flex; transform: translateY(0); }
+        .cart-details span { font-size: 1rem; font-weight: 500; }
+        .cart-total { font-size: 1.2rem; font-weight: 700; margin-left: 10px; }
+        .view-cart-btn {
+            background-color: var(--primary-color); color: white;
+            padding: 10px 18px; border-radius: 8px; font-size: 1rem;
+            font-weight: 600; display: flex; align-items: center;
+            gap: 8px; cursor: pointer;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="background-container"></div>
+
+    <div class="menu-header">
+        <div class="header-top">
+            <div class="header-info">
+                <a class="back-link" href="{% url 'home' %}"><i class="fa-solid fa-arrow-left"></i> Back to Vendors</a>
+                
+                <h1>{{ vendor.name }}</h1>
+                <p>{{ vendor.description }} | {{ vendor.location }}</p>
+            </div>
+            <div class="header-actions">
+                <span class="item-review"><i class="fa-solid fa-star"></i> {{ vendor.avg_rating }}</span>
+            </div>
+        </div>
+        </div>
+    
+    <div class="menu-content">
+        
+        <div class="menu-section">
+            <h3>Menu</h3>
+
+            {% for item in menu_items %}
+            <div 
+                class="item-card" 
+                data-name="{{ item.name }}" 
+                data-price="{{ item.price }}" 
+                data-description="{{ item.short_description }}"
+                data-img="{{ item.image_url|default:'https://placehold.co/100/eee/ccc?text=Item' }}"
+                data-type="{% if item.is_veg %}veg{% else %}non-veg{% endif %}"
+                data-category="{{ item.category|lower }}"
+            >
+                <div class="item-details">
+                    <div class="item-name-info">
+                        <span class="item-type-icon {% if item.is_veg %}veg{% else %}non-veg{% endif %}"></span>
+                        <h4>{{ item.name }}</h4>
+                    </div>
+                    <p class="item-description">{{ item.short_description }}</p>
+                    <div class="item-meta">
+                        <span class="item-price">₹{{ item.price }}</span>
+                        <span class="item-review"><i class="fa-solid fa-star"></i> {{ item.avg_rating }}</span>
+                        
+                        {% if item.is_available %}
+                            <span class="delivery-time">Available</span>
+                        {% else %}
+                            <span class="delivery-time" style="color: #c0392b;">Sold Out</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div 
+  class="card-image-placeholder" 
+  style="background-image: url('https://www.shutterstock.com/image-vector/orange-gradient-pattern-background-nice-260nw-1934307431.jpg');">
+</div>
+
+                    
+                    {% if item.is_available %}
+                    <button class="add-to-cart-btn">ADD</button>
+                    {% else %}
+                    <button class="add-to-cart-btn" style="background-color: #95a5a6; cursor: default;">Sold Out</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p>This vendor has not added any menu items yet.</p>
+            {% endfor %}
+            </div>
+    </div>
+
+    <div class="item-customization-modal-overlay" id="item-modal-overlay">
+        </div>
+    <div class="item-customization-modal-overlay" id="cart-modal-overlay">
+        </div>
+    <div class="cart-summary-bar" id="cart-summary-bar">
+        </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          
+            let cart = [];
+            let currentItem = {};
+
+        
+            const addButtons = document.querySelectorAll('.add-to-cart-btn');
+            
+
+            const itemModalOverlay = document.getElementById('item-modal-overlay');
+            const closeItemModalBtn = document.getElementById('close-item-modal-btn');
+
+            const cartSummaryBar = document.getElementById('cart-summary-bar');
+            const cartItemsCount = document.getElementById('cart-items-count');
+            const cartTotal = document.getElementById('cart-total');
+            const viewCartBtn = document.getElementById('view-cart-btn');
+
+
+            addButtons.forEach(button => {
+    
+                if (!button.style.cursor || button.style.cursor !== 'default') {
+                    button.addEventListener('click', (e) => {
+                        const card = e.target.closest('.item-card');
+                        
+
+                        openItemModal(card.dataset);
+                    });
+                }
+            });
+
+            function openItemModal(itemData) {
+
+                currentItem = {
+                    name: itemData.name,
+                    basePrice: parseFloat(itemData.price),
+                    quantity: 1,
+                    totalPrice: parseFloat(itemData.price)
+                };
+                cart.push(currentItem);
+                updateCartSummaryBar();
+            }
+
+
+            function updateCartSummaryBar() {
+                if (cart.length === 0) {
+                    cartSummaryBar.classList.remove('visible');
+                    return;
+                }
+                let totalItems = 0;
+                let totalPrice = 0;
+                cart.forEach(item => {
+                    totalItems += item.quantity;
+                    totalPrice += item.totalPrice;
+                });
+                
+ 
+                cartItemsCount.textContent = `${totalItems} ${totalItems > 1 ? 'Items' : 'Item'}`;
+                cartTotal.textContent = `₹${totalPrice.toFixed(2)}`;
+                
+       
+                cartSummaryBar.classList.add('visible');
+            }
+            
+        });
+    </script>
+</body>
+</html>

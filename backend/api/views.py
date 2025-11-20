@@ -1,5 +1,5 @@
 # api/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect , get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
@@ -39,17 +39,17 @@ def login_view(request):
     
     return render(request, 'api/login.html', {'form': form})
 
-# Use a decorator to ensure only logged-in users can see this page
+
 @login_required
 def home(request):
     vendors = []
     user_university = None
     try:
         user_university = request.user.profile.university
-        # Filter vendors based on the user's university
+
         vendors = Vendor.objects.filter(university=user_university)
     except Profile.DoesNotExist:
-        # This can happen if a profile wasn't created, handle it gracefully
+      
         messages.warning(request, 'Your profile is incomplete. Please contact support.')
     
     context = {
@@ -57,3 +57,16 @@ def home(request):
         'user_university': user_university
     }
     return render(request, 'api/home.html', context)
+
+@login_required
+def vendor_menu(request, vendor_id):
+
+    vendor = get_object_or_404(Vendor, id=vendor_id)
+    
+    menu_items = vendor.menu_items.all()
+    
+    context = {
+        'vendor': vendor,
+        'menu_items': menu_items
+    }
+    return render(request, 'api/menu.html', context)

@@ -1,20 +1,165 @@
 {% extends 'api/base.html' %}
 
 {% block content %}
-    <h2>Welcome to {{ user_university.name }}!</h2>
-    <h3>Available Vendors:</h3>
+<style>
+    .content-wrapper {
+        display: block;
+        padding: 0;
+        max-width: 1200px;
+        margin: 20px auto;
+        background: var(--background-light, #f5f5f5);
+        border-radius: 16px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
     
-    {% if vendors %}
-        <ul>
+    
+    .restaurant-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        padding: 0 20px;
+    }
+    .restaurant-card {
+        background-color: #fff; border-radius: 12px; overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .restaurant-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+    }
+    .card-image-placeholder {
+        width: 100%; height: 180px;
+        background-size: cover; background-position: center;
+        background-color: #eee;
+    }
+    .card-info { padding: 15px; }
+    .card-info h3 { font-size: 1.4rem; margin-bottom: 5px; color: var(--secondary-color); }
+    .cuisine-delivery-row {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 10px;
+    }
+    .cuisine { font-size: 0.9rem; color: #95a5a6; margin-bottom: 0; }
+    .delivery {
+        background-color: #e74c3c; color: white; text-align: right;
+        padding: 4px 8px; border-radius: 4px;
+        font-size: 0.8rem; font-weight: 500;
+    }
+    .details {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-top: 10px; border-top: 1px solid #ecf0f1;
+    }
+    .details span { font-size: 0.9rem; font-weight: 600; }
+    .rating { color: #27ae60; }
+    .status { color: #688789; }
+</style>
+
+<h2 id="page-title">Vendors at {{ user_university.name }}</h2>
+<div style="padding: 0 20px; margin-bottom: 20px;">
+    <input type="text" id="search-input" placeholder="Search Food Items or Stalls..." style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+</div>
+
+<section class="restaurant-listings">
+    <div class="restaurant-grid" id="restaurant-grid">
+        
         {% for vendor in vendors %}
-            <li>
-                <strong>{{ vendor.name }}</strong> ({{ vendor.location }})
-                <p>Status: {{ vendor.crowd_status }}</p>
-            </li>
+        <a href="{% url 'vendor_menu' vendor.id %}" class="restaurant-card" data-name="{{ vendor.name }}">
+            
+           <div 
+  class="card-image-placeholder" 
+  style="background-image: url('https://www.shutterstock.com/image-vector/orange-gradient-pattern-background-nice-260nw-1934307431.jpg');">
+</div>
+
+            
+            <div class="card-info">
+                <h3>{{ vendor.name }}</h3>
+                <div class="cuisine-delivery-row">
+                    <p class="cuisine">{{ vendor.description|truncatewords:5 }}</p>
+                    <span class="delivery">{{ vendor.get_dietary_focus_display }}</span>
+                </div>
+                <div class="details">
+                    <span class="rating"><i class="fa-solid fa-star"></i> {{ vendor.avg_rating }}</span>
+                    <span class="status">
+                        {% if vendor.is_open %}
+                            <span style="color: #27ae60;">Open</span>
+                        {% else %}
+                            <span style="color: #e74c3c;">Closed</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </a> {% empty %}
+            <p>No vendors are listed for your university yet.</p>
         {% endfor %}
-        </ul>
-    {% else %}
-        <p>No vendors are listed for your university yet.</p>
-    {% endif %}
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const searchInput = document.getElementById('search-input');
+    const restaurantGrid = document.getElementById('restaurant-grid');
+    const allCards = restaurantGrid.querySelectorAll('.restaurant-card');
+
+    const filterVendors = () => {
+        const searchTerm = searchInput.value.toLowerCase(); 
+        allCards.forEach(card => {
+            const vendorName = card.dataset.name.toLowerCase();
+            if (vendorName.includes(searchTerm)) {
+                card.style.display = 'block'; 
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    };
+
+    searchInput.addEventListener('keyup', filterVendors);
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+
+    const searchInput = document.getElementById('search-input');
+    const restaurantGrid = document.getElementById('restaurant-grid');
+    const allCards = restaurantGrid.querySelectorAll('.restaurant-card');
+
+
+    const filterVendors = () => {
+        
+        
+        const searchTerm = searchInput.value.toLowerCase(); 
+
+        // Loop over each card
+        allCards.forEach(card => {
+            const vendorName = card.dataset.name.toLowerCase(); 
+            
+            
+            if (vendorName.includes(searchTerm)) {
+                card.style.display = 'block'; // show card
+            } else {
+                card.style.display = 'none';  // hide card
+            }
+        });
+    };
+
+
+    searchInput.addEventListener('keyup', filterVendors);
+
+
+
+    allCards.forEach(card => {
+        card.addEventListener('click', () => {
+            
+            const vendorName = card.dataset.name;
+            alert('You clicked on ' + vendorName + '! (This is a JS event)');
+
+        });
+    });
+
+});
+</script>
 
 {% endblock %}

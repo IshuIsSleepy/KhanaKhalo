@@ -8,4 +8,5 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='api/logout.html'), name='logout'),
+    path('vendor/<int:vendor_id>/', views.vendor_menu, name='vendor_menu'),
 ]
